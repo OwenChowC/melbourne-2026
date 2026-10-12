@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>墨爾本十月之旅</title>
     
-    <!-- 加入 Web App 支援與 Logo 圖標 (加到主畫面用) -->
+    <!-- 加入 Web App 支援與 Logo 圖標 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="墨爾本之旅">
-    <!-- 請將你的 Logo 圖片命名為 logo.png 並放在同一資料夾下 -->
-    <link rel="apple-touch-icon" href="logo.jpg">
-    <link rel="icon" type="image/png" href="logo.jpg">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -53,7 +52,6 @@
 <body class="text-gray-800 antialiased overflow-x-hidden selection:bg-aus-green selection:text-white">
     <div id="app" class="min-h-screen flex flex-col relative pb-20 pb-safe">
         
-        <!-- 滿版頁首 Banner，無邊框空隙 -->
         <header class="w-full h-[250px] relative overflow-hidden rounded-b-[40px] z-0 shadow-md bg-aus-green">
             <img src="Banner.jpg" alt="Banner" class="w-full h-full object-cover object-center" />
             <div class="absolute inset-0 bg-black/15"></div>
@@ -73,7 +71,6 @@
                         <i :class="weather.icon" class="text-4xl text-aus-accent"></i>
                     </div>
 
-                    <!-- 日期已修正: 18/10 是星期日 (Sun) -->
                     <div class="flex overflow-x-auto space-x-3 no-scrollbar pb-2 mb-4">
                         <div v-for="day in days" :key="day.id" @click="currentDay = day.id"
                              :class="['flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition shadow-sm', 
@@ -102,8 +99,6 @@
                                         </div>
                                         <h3 class="text-lg font-bold text-gray-800 mt-2">{{ item.name }}</h3>
                                     </div>
-                                    
-                                    <!-- 拖曳把手與編輯按鈕 -->
                                     <div class="flex flex-col items-center gap-3 mt-1">
                                         <button @click="editItem(item)" class="text-gray-300 hover:text-aus-green"><i class="fa-solid fa-pen"></i></button>
                                         <div class="drag-handle text-gray-200 hover:text-gray-400 cursor-move text-lg touch-none p-1"><i class="fa-solid fa-grip-lines"></i></div>
@@ -191,7 +186,47 @@
                 </div>
             </transition>
 
-            <!-- Tab 5: 資訊 -->
+            <!-- 新增 Tab 5: 公數 (Public Fund) -->
+            <transition name="fade" mode="out-in">
+                <div v-if="currentTab === 'public_fund'" class="pb-24">
+                    <!-- 公費統計面板 -->
+                    <div class="bg-aus-dark rounded-2xl p-6 text-white shadow-md mb-6 relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 opacity-10"><i class="fa-solid fa-sack-dollar text-8xl"></i></div>
+                        <h3 class="text-sm font-medium mb-1 opacity-80">公費剩餘餘額 (AUD)</h3>
+                        <p class="text-4xl font-bold">${{ remainingPublicFund.toFixed(2) }}</p>
+                        <p class="text-xs mt-2 text-aus-light/70">總額: $3600.00 | 已支出: ${{ totalPublicExpenses.toFixed(2) }}</p>
+                    </div>
+
+                    <!-- 公費明細列表 -->
+                    <div class="space-y-3">
+                        <div v-for="exp in publicExpenses" :key="exp.id" class="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-aus-light flex items-center justify-center text-aus-green shrink-0">
+                                    <i :class="getExpenseIcon(exp.category)"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">{{ exp.name }}</h4>
+                                    <p class="text-xs text-gray-400">{{ exp.date }} • {{ exp.payment }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-aus-accent">${{ exp.amount }}</p>
+                                <button @click="deletePublicExpense(exp.id)" class="text-xs text-red-400 mt-1">刪除</button>
+                            </div>
+                        </div>
+                        <div v-if="publicExpenses.length === 0" class="text-center text-gray-400 text-sm py-4">
+                            目前尚無公費支出紀錄
+                        </div>
+                    </div>
+
+                    <!-- 新增公費 FAB -->
+                    <button @click="openPublicExpenseModal" class="fixed bottom-24 right-5 w-14 h-14 bg-aus-dark text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-50">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </transition>
+
+            <!-- Tab 6: 資訊 -->
             <transition name="fade" mode="out-in">
                 <div v-if="currentTab === 'info'" class="space-y-6 pb-24">
                     
@@ -224,7 +259,7 @@
                         <p class="text-xs text-gray-400 mt-2 text-right">當前匯率: 1 AUD ≈ {{ exchangeRate }} HKD</p>
                     </div>
 
-                    <!-- 必備清單 (已加入國際車牌) -->
+                    <!-- 必備清單 (已加入國際車牌 & 香港車牌) -->
                     <div class="bg-white rounded-2xl p-5 shadow-sm">
                         <h3 class="font-bold text-aus-dark mb-3"><i class="fa-solid fa-list-check mr-2"></i>必備清單</h3>
                         <div class="grid grid-cols-2 gap-2">
@@ -251,7 +286,6 @@
                             <a href="https://maps.google.com/?q=915+Collins+Street,+Docklands,+Melbourne" target="_blank" class="text-xs text-blue-500 underline"><i class="fa-solid fa-location-arrow mr-1"></i>導航</a>
                         </div>
                         
-                        <!-- 新增：租車資訊 -->
                         <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-purple-500">
                             <h3 class="font-bold text-aus-dark mb-2"><i class="fa-solid fa-car mr-2 text-purple-500"></i>租車資訊 (Europcar)</h3>
                             <p class="text-sm font-bold text-gray-800">車型: Mazda CX-5</p>
@@ -262,7 +296,6 @@
                         </div>
                     </div>
 
-                    <!-- 報警號碼已更新 (澳洲 000 / 行動電話通用 112) -->
                     <div class="flex gap-4">
                         <a href="tel:000" class="flex-1 bg-red-50 text-red-600 rounded-2xl p-4 text-center shadow-sm">
                             <i class="fa-solid fa-truck-medical text-2xl mb-1"></i>
@@ -277,10 +310,11 @@
             </transition>
         </main>
 
+        <!-- 底部導航列 (修改 flex-1 讓 6 個按鈕平均分配空間) -->
         <nav class="fixed bottom-0 w-full bg-white shadow-app rounded-t-3xl pb-safe z-40 border-t border-gray-100">
-            <div class="flex justify-around items-center h-20 px-2">
+            <div class="flex justify-between items-center h-20 px-2">
                 <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id" 
-                        class="flex flex-col items-center justify-center w-16 transition-colors duration-300"
+                        class="flex flex-col items-center justify-center flex-1 transition-colors duration-300"
                         :class="currentTab === tab.id ? 'text-aus-green' : 'text-gray-400'">
                     <i :class="tab.icon" class="text-xl mb-1" :class="{'scale-125': currentTab === tab.id}"></i>
                     <span class="text-[10px] font-medium">{{ tab.name }}</span>
@@ -355,6 +389,30 @@
             </div>
         </div>
 
+        <!-- 新增: 公數填寫 Modal -->
+        <div v-if="showPublicExpenseModal" class="fixed inset-0 bg-black/50 z-50 flex justify-center items-end sm:items-center p-0 sm:p-4">
+            <div class="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl p-6 pb-safe">
+                <h3 class="text-xl font-bold mb-4 text-aus-dark">新增公費紀錄</h3>
+                <div class="space-y-3">
+                    <select v-model="publicExpenseForm.category" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                        <option value="transit">交通</option><option value="food">飲食</option>
+                        <option value="acc">住宿</option><option value="ticket">門票</option>
+                        <option value="shopping">購物</option><option value="other">其他</option>
+                    </select>
+                    <input type="text" v-model="publicExpenseForm.name" placeholder="項目名稱" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                    <input type="date" v-model="publicExpenseForm.date" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                    <input type="number" v-model="publicExpenseForm.amount" placeholder="金額 (AUD)" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                    <select v-model="publicExpenseForm.payment" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm">
+                        <option value="Cash">現金 (Cash)</option><option value="Credit Card">信用卡</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button @click="showPublicExpenseModal = false" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">取消</button>
+                    <button @click="savePublicExpense" class="flex-1 py-3 bg-aus-dark text-white rounded-xl font-bold">儲存</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -363,15 +421,17 @@
         createApp({
             setup() {
                 const currentTab = ref('itinerary');
+                
+                // 新增 Tab: public_fund (公數)
                 const tabs = [
                     { id: 'itinerary', name: '行程', icon: 'fa-solid fa-location-dot' },
                     { id: 'guide', name: '導覽', icon: 'fa-solid fa-map' },
                     { id: 'shopping', name: '購物', icon: 'fa-solid fa-basket-shopping' },
                     { id: 'expense', name: '花費', icon: 'fa-solid fa-coins' },
+                    { id: 'public_fund', name: '公數', icon: 'fa-solid fa-sack-dollar' },
                     { id: 'info', name: '資訊', icon: 'fa-solid fa-circle-info' }
                 ];
 
-                // 修正 1: 日期與星期對應 (18/10 星期日開始)
                 const days = ref([
                     { id: 'D1', date: '18', weekday: 'Sun' }, { id: 'D2', date: '19', weekday: 'Mon' },
                     { id: 'D3', date: '20', weekday: 'Tue' }, { id: 'D4', date: '21', weekday: 'Wed' },
@@ -381,15 +441,12 @@
                 ]);
                 const currentDay = ref('D1');
 
-                // 修正 5: 行程全面更新為新版配置
                 const itineraryData = ref({
-                    'D1': [
-                        { id: 1, type: 'flight', category: 'flight', time: '20:05', name: 'QF030 飛往墨爾本', notes: '香港國際機場出發', transportType: 'walk', transportTime: 0 }
-                    ],
+                    'D1': [{ id: 1, type: 'flight', category: 'flight', time: '20:05', name: 'QF030 飛往墨爾本', notes: '香港國際機場出發', transportType: 'walk', transportTime: 0 }],
                     'D2': [
                         { id: 2, category: 'acc', time: '08:20', name: '抵達墨爾本機場 ➔ 前往 Docklands 寄行李', notes: '搭乘 SkyBus 前往海濱私人公寓', transportType: 'bus', transportTime: 45 },
                         { id: 3, category: 'food', time: '11:00', name: '德格雷夫斯街 (Degraves Street)', notes: '享用Cafe與Brunch (Degraves Espresso 或 Higher Ground)', transportType: 'train', transportTime: 30 },
-                        { id: 4, category: 'acc', time: '15:00', name: '公寓辦理 Check-In', notes: 'Docklands 公寓', transportType: 'train', transportTime: 20 },
+                        { id: 4, category: 'acc', time: '15:00', name: '飯店辦理 Check-In', notes: 'Docklands 公寓', transportType: 'train', transportTime: 20 },
                         { id: 5, category: 'shopping', time: '15:30', name: '皇家拱廊 (Royal Arcade)', notes: '尋找 Koko Black 朱古力', transportType: 'train', transportTime: 15 },
                         { id: 6, category: 'food', time: '18:30', name: '晚餐 & 甜品', notes: '晚餐: Pastuso 或 MoVida / 甜品: Homm Dessert 或 Pinto Tiramisu', transportType: 'walk', transportTime: 15 }
                     ],
@@ -412,7 +469,7 @@
                     'D5': [
                         { id: 19, category: 'attraction', time: '10:00', name: '前往 Brighton 海灘', notes: '搭乘大眾運輸或開車', transportType: 'car', transportTime: 30 },
                         { id: 20, category: 'attraction', time: '11:00', name: '彩虹小屋 (Bathing Boxes)', notes: '與海邊獨特更衣小屋合照', transportType: 'walk', transportTime: 10 },
-                        { id: 21, category: 'food', time: '12:30', name: '前往查斯頓購物中心享用午餐', notes: '', transportType: 'car', transportTime: 30 },
+                        { id: 21, category: 'food', time: '12:30', name: '前往查斯頓購物中心享用午餐', notes: '車程預估', transportType: 'car', transportTime: 30 },
                         { id: 22, category: 'shopping', time: '14:00', name: '查斯頓購物中心血拼', notes: '南半球最大購物中心', transportType: 'walk', transportTime: 0 },
                         { id: 23, category: 'food', time: '18:30', name: '晚餐 & 甜品', notes: '晚餐: Roule Galette 或 Reine & La Rue 或 Yakikami。甜品: Kori 或 Hareruya', transportType: 'car', transportTime: 30 }
                     ],
@@ -428,14 +485,14 @@
                     ],
                     'D7': [
                         { id: 32, category: 'food', time: '08:30', name: '南墨爾本市場 & 午餐', notes: '餐廳：Aptus Seafood 或 Simply Spanish', transportType: 'car', transportTime: 15 },
-                        { id: 33, category: 'shopping', time: '11:30', name: 'DFO South Wharf Outlet', notes: '洗錢', transportType: 'car', transportTime: 10 },
+                        { id: 33, category: 'shopping', time: '11:30', name: 'DFO South Wharf Outlet', notes: '大採購洗錢', transportType: 'car', transportTime: 10 },
                         { id: 34, category: 'food', time: '19:00', name: '與朋友聚餐', notes: '餐廳：Max on Hardware', transportType: 'car', transportTime: 15 }
                     ],
                     'D8': [
                         { id: 35, category: 'food', time: '09:00', name: '維多利亞女王市場 & 午餐', notes: '餐廳：Bratwurst Shop & Co, Agathé Pastry, Hot Jam Donuts', transportType: 'car', transportTime: 15 },
                         { id: 36, category: 'attraction', time: '12:00', name: '圖書館 & 塗鴉巷', notes: '觀看圖書館穹頂閱覽室、Hosier Lane型格街拍', transportType: 'walk', transportTime: 15 },
                         { id: 37, category: 'shopping', time: '14:00', name: '墨爾本商場 & 墨爾本中央購物中心', notes: '洗錢同逛街', transportType: 'walk', transportTime: 10 },
-                        { id: 38, category: 'other', time: '16:30', name: '前往 Europcar 還車', notes: '還車', transportType: 'car', transportTime: 15 },
+                        { id: 38, category: 'other', time: '16:30', name: '前往 Europcar 還車', notes: '租車還車', transportType: 'car', transportTime: 15 },
                         { id: 39, category: 'food', time: '18:00', name: '晚餐', notes: '餐廳：Tipo 00或Asado或Palermo', transportType: 'walk', transportTime: 15 }
                     ],
                     'D9': [
@@ -485,10 +542,16 @@
                 const expenses = ref(JSON.parse(localStorage.getItem('melb_expenses')) || []);
                 const totalExpenses = computed(() => expenses.value.reduce((sum, e) => sum + parseFloat(e.amount), 0));
 
-                // 修正 2: 載入時檢查並加入「國際車牌」到清單
+                // 新增公數系統
+                const publicExpenses = ref(JSON.parse(localStorage.getItem('melb_public_expenses')) || []);
+                const totalPublicExpenses = computed(() => publicExpenses.value.reduce((sum, e) => sum + parseFloat(e.amount), 0));
+                // 自動計算剩餘公費金額 (總額 3600 - 已花費)
+                const remainingPublicFund = computed(() => 3600 - totalPublicExpenses.value);
+
+                // 檢查清單 (加入香港車牌與國際車牌的防呆)
                 let initialChecklist = JSON.parse(localStorage.getItem('melb_checklist')) || [
                     { name: '護照 Passport', done: false }, { name: '電子簽證 ETA', done: false },
-                    { name: '國際車牌 (駕照)', done: false },
+                    { name: '國際車牌 (駕照)', done: false }, { name: '香港車牌', done: false },
                     { name: 'E-SIM / 漫遊', done: false }, { name: '澳幣現金', done: false },
                     { name: '行動電源 & 線', done: false }, { name: '八字轉接頭', done: false },
                     { name: '常備藥品', done: false }, { name: '保暖衣物', done: false }
@@ -496,11 +559,16 @@
                 if (!initialChecklist.find(i => i.name.includes('國際車牌'))) {
                     initialChecklist.splice(2, 0, { name: '國際車牌 (駕照)', done: false });
                 }
+                if (!initialChecklist.find(i => i.name.includes('香港車牌'))) {
+                    initialChecklist.splice(3, 0, { name: '香港車牌', done: false });
+                }
                 const checklist = ref(initialChecklist);
 
+                // 監聽變化自動存入 LocalStorage
                 Vue.watch(checklist, (val) => localStorage.setItem('melb_checklist', JSON.stringify(val)), { deep: true });
                 Vue.watch(shoppingList, (val) => localStorage.setItem('melb_shopping', JSON.stringify(val)), { deep: true });
                 Vue.watch(expenses, (val) => localStorage.setItem('melb_expenses', JSON.stringify(val)), { deep: true });
+                Vue.watch(publicExpenses, (val) => localStorage.setItem('melb_public_expenses', JSON.stringify(val)), { deep: true });
 
                 const getCategoryName = (cat) => {
                     const map = { attraction: '景點', food: '美食', shopping: '購物', acc: '住宿', flight: '航班', other: '其他' };
@@ -516,6 +584,7 @@
                 };
                 const openMaps = (dest) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest + ' Melbourne')}`, '_blank');
 
+                // 行程拖曳
                 const itineraryList = ref(null);
                 Vue.watch(currentDay, () => {
                     nextTick(() => {
@@ -535,6 +604,7 @@
                     });
                 }, { immediate: true });
 
+                // Modal - 行程
                 const showEditModal = ref(false);
                 const isEditing = ref(false);
                 const editForm = ref({});
@@ -568,6 +638,7 @@
                     }
                 };
 
+                // 圖片壓縮
                 const handleImageUpload = (event, type) => {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -591,6 +662,7 @@
                     reader.readAsDataURL(file);
                 };
 
+                // Modal - 購物
                 const showShoppingModal = ref(false);
                 const shoppingForm = ref({});
                 const openShoppingModal = () => { shoppingForm.value = { name: '', img: '' }; showShoppingModal.value = true; };
@@ -601,6 +673,7 @@
                 };
                 const deleteShopping = (id) => shoppingList.value = shoppingList.value.filter(s => s.id !== id);
 
+                // Modal - 花費 (個人)
                 const showExpenseModal = ref(false);
                 const expenseForm = ref({});
                 const openExpenseModal = () => {
@@ -614,6 +687,20 @@
                 };
                 const deleteExpense = (id) => expenses.value = expenses.value.filter(e => e.id !== id);
 
+                // Modal - 公數 (Public Fund)
+                const showPublicExpenseModal = ref(false);
+                const publicExpenseForm = ref({});
+                const openPublicExpenseModal = () => {
+                    publicExpenseForm.value = { category: 'food', name: '', date: new Date().toISOString().split('T')[0], amount: '', payment: 'Cash' };
+                    showPublicExpenseModal.value = true;
+                };
+                const savePublicExpense = () => {
+                    if(!publicExpenseForm.value.name || !publicExpenseForm.value.amount) return alert('請填寫完整資訊');
+                    publicExpenses.value.unshift({ id: Date.now(), ...publicExpenseForm.value });
+                    showPublicExpenseModal.value = false;
+                };
+                const deletePublicExpense = (id) => publicExpenses.value = publicExpenses.value.filter(e => e.id !== id);
+
                 onMounted(() => {
                     fetchExchangeRate();
                 });
@@ -622,10 +709,12 @@
                     currentTab, tabs, days, currentDay, itineraryData, currentItinerary, guideSpots,
                     weather, exchangeRate, isRateLive, calcAud,
                     shoppingList, expenses, totalExpenses, checklist,
+                    publicExpenses, totalPublicExpenses, remainingPublicFund,
                     getCategoryName, getTransportIcon, getExpenseIcon, openMaps,
                     itineraryList, showEditModal, isEditing, editForm, openAddModal, editItem, saveItinerary, confirmDelete,
                     showShoppingModal, shoppingForm, openShoppingModal, saveShopping, deleteShopping,
-                    showExpenseModal, expenseForm, openExpenseModal, saveExpense, deleteExpense, handleImageUpload
+                    showExpenseModal, expenseForm, openExpenseModal, saveExpense, deleteExpense, handleImageUpload,
+                    showPublicExpenseModal, publicExpenseForm, openPublicExpenseModal, savePublicExpense, deletePublicExpense
                 };
             }
         }).mount('#app');
